@@ -44,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
     }
 
-    private fun checkLoginEnabled() {
+    private fun checkLoginEnabled() {sh
         binding.run {
             loginButton.isEnabled =
                 !loginEditText.text.isNullOrBlank() && !passwordEditText.text.isNullOrBlank()

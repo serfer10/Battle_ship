@@ -1,4 +1,4 @@
-package com.tselishchev.battleship.ui.activities
+package com.tselishchev.battleship.ui.profile
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
