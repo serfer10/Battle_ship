@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">BattleShip</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="register_new_account">Register new account</string>
+    <string name="login_help">Enter login</string>
+    <string name="password_help">Enter password</string>
+    <string name="nickname_help">Enter your nickname</string>
+    <string name="edit_nickname">Change your nickname</string>
+    <string name="edit_nickname_help">Nickname</string>
+    <string name="edit_password">Change your password</string>
+    <string name="edit_password_help">Password</string>
+    <string name="save_new_info">Save new info</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="new_profile">New profile</string>
+</resources>
