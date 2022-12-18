@@ -1,12 +1,12 @@
-package com.tselishchev.battleship.ui.activities
+package com.tselishchev.battleship.ui.profile
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.core.widget.addTextChangedListener
 import com.tselishchev.battleship.databinding.ActivityUpdateProfileBinding
 import com.tselishchev.battleship.models.User
 import com.tselishchev.battleship.ui.game.GameIntentContext
-import com.tselishchev.battleship.ui.profile.ProfileViewModel
 import com.tselishchev.battleship.utils.setSafeOnClickListener
 
 class UpdateProfileActivity : AppCompatActivity() {
@@ -19,9 +19,14 @@ class UpdateProfileActivity : AppCompatActivity() {
         binding = ActivityUpdateProfileBinding.inflate(layoutInflater)
         context = GameIntentContext.getFrom(intent)
 
+        checkRegistryAllowed()
         setContentView(binding.root)
         binding.run{
             updateProfileToolbar.setNavigationOnClickListener{finish()}
+
+            nicknameEditText.addTextChangedListener{checkRegistryAllowed()}
+            passwordEditText.addTextChangedListener{checkRegistryAllowed()}
+
             buttonSaveInfo.setSafeOnClickListener {
                 viewModel.updateUser(User(
                     id = this@UpdateProfileActivity.context.user.toString()

@@ -1,4 +1,4 @@
-package com.tselishchev.battleship.ui.activities
+package com.tselishchev.battleship.ui.profile
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
