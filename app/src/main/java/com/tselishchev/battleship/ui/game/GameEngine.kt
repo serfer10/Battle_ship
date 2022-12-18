@@ -1,11 +1,13 @@
 package com.tselishchev.battleship.ui.game
 
+import android.util.Log
 import com.tselishchev.battleship.db.GameEventRepository
 import com.tselishchev.battleship.db.GameRepository
 import com.tselishchev.battleship.db.UserActionRepository
 import com.tselishchev.battleship.models.*
 import io.reactivex.Completable
-import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.Observable
+import io.reactivex.Single
 
 class GameEngine(
     private val gameId: String
@@ -13,42 +15,40 @@ class GameEngine(
     private val userActionRepository = UserActionRepository()
     private val gameEventRepository = GameEventRepository()
     private val gameRepository = GameRepository()
-    private val disposable = CompositeDisposable()
 
     private var user1: String? = null
     private var user2: String? = null
     private var gameBoard1: GameBoard? = null
     private var gameBoard2: GameBoard? = null
     private var activeGame: Game? = null
-    private var isGameEnded: Boolean = false
 
     init {
         listenForUserActions()
     }
 
     private fun listenForUserActions() {
-        disposable.add(userActionRepository.listenForActions(gameId)
-            .flatMapCompletable { newAction ->
+        val subscription = userActionRepository.listenForActions(gameId)
+            .flatMapSingle { newAction ->
                 when (newAction.type) {
                     UserActionType.Act -> {
-                        return@flatMapCompletable handleActEvent(newAction as ActAction)
+                        return@flatMapSingle handleActEvent(newAction as ActAction)
                     }
                     UserActionType.Join -> {
-                        return@flatMapCompletable handleJoinEvent(newAction as JoinAction)
+                        return@flatMapSingle handleJoinEvent(newAction as JoinAction)
                     }
                     UserActionType.Left -> {
-                        return@flatMapCompletable handleLeftEvent(newAction as LeftAction)
+                        return@flatMapSingle handleLeftEvent(newAction as LeftAction)
                     }
                 }
-            }.subscribe({
-                if (isGameEnded) {
-                    disposable.dispose()
-                }
-            }, {})
-        )
+            }.takeUntil { gameEnded -> gameEnded }.subscribe({
+                Log.d("GAME_ENGINE", "Handled user action")
+            }, {
+                Log.e("GAME_ENGINE", "Failed to handle user action $it")
+            })
+
     }
 
-    private fun handleActEvent(action: ActAction): Completable {
+    private fun handleActEvent(action: ActAction): Single<Boolean> {
         var user: String? = null
         var userBoard: GameBoard? = null
         var opponentBoard: GameBoard? = null
@@ -67,22 +67,18 @@ class GameEngine(
         }
 
         if (opponentBoard == null || opponentUser == null || userBoard == null || user == null) {
-            return Completable.complete()
+            return Single.just(false /* game ended? */)
         }
 
-        return gameEventRepository.addEvent(
-            getBattleUpdate(
-                userBoard, opponentBoard, user, opponentUser, action
-            )
-        )
+        return getBattleUpdate(opponentBoard, opponentUser, action)
     }
 
-    private fun handleJoinEvent(action: JoinAction): Completable {
+    private fun handleJoinEvent(action: JoinAction): Single<Boolean> {
         if (!user1.isNullOrEmpty() && !user2.isNullOrEmpty()) {
-            return Completable.complete()
+            return Single.just(false /* game ended? */)
         }
 
-        return gameRepository.getGame(gameId).flatMapCompletable { game ->
+        return gameRepository.getGame(gameId).flatMap { game ->
             if (user1.isNullOrEmpty() && game.user1 == action.user) {
                 user1 = action.user
                 gameBoard1 = GameBoard(GameCells(action.cells))
@@ -92,41 +88,30 @@ class GameEngine(
             }
 
             if (user1.isNullOrEmpty() || user2.isNullOrEmpty()) {
-                return@flatMapCompletable Completable.complete()
+                return@flatMap Single.just(false /* game ended? */)
             }
 
-            val firstUserIndex = 0 // (0..1).random()
+            val firstUserIndex = (0..1).random()
             val firstUser = if (firstUserIndex == 0) user1!! else user2!!
             activeGame = game
 
-            return@flatMapCompletable gameEventRepository.addEvent(
+            return@flatMap gameEventRepository.addEvent(
                 StartGameEvent(
                     gameId, GameEventType.Start, firstUser
                 )
-            )
+            ).toSingleDefault(false /* game ended? */)
         }
     }
 
-    private fun handleLeftEvent(action: LeftAction): Completable {
-        val cells1 = gameBoard1?.cells?.items?.flatten()
-        val cells2 = gameBoard2?.cells?.items?.flatten()
-
-        return gameEventRepository.addEvent(
-            endGame(
-                null,
-                cells1 ?: emptyList(),
-                cells2 ?: emptyList()
-            )
-        )
+    private fun handleLeftEvent(action: LeftAction): Single<Boolean> {
+        return endGame(null)
     }
 
     private fun getBattleUpdate(
-        userBoard: GameBoard,
         opponentBoard: GameBoard,
-        user: String,
         opponentUser: String,
         action: ActAction
-    ): GameEvent {
+    ): Single<Boolean> {
         val cell = opponentBoard.hit(action.position)
         var nextUser: String = opponentUser
 
@@ -134,37 +119,47 @@ class GameEngine(
             nextUser = action.user
 
             if (opponentBoard.isDefeated()) {
-                val userCells = userBoard.cells.items.flatten()
-                val opponentCells = opponentBoard.cells.items.flatten()
-
-                if (user1 == user) {
-                    return endGame(action.user, userCells, opponentCells)
-                }
-
-                return endGame(action.user, opponentCells, userCells)
+                return endGame(action.user)
             }
         }
 
-        val userCells = userBoard.cells.hideShips().flatten()
-        val opponentCells = opponentBoard.cells.hideShips().flatten()
-        if (user == user1) {
-            return UpdateGameEvent(
-                gameId, GameEventType.Update, nextUser, userCells, opponentCells
-            )
+        val cells1 = gameBoard1?.cells?.hideShips()?.flatten()
+        val cells2 = gameBoard2?.cells?.hideShips()?.flatten()
+
+        if (cells1 == null || cells2 == null) {
+            return Single.just(false /* game ended? */)
         }
 
-        return UpdateGameEvent(
-            gameId, GameEventType.Update, nextUser, opponentCells, userCells
-        )
+        return gameEventRepository.addEvent(
+            UpdateGameEvent(
+                gameId, GameEventType.Update, nextUser, cells1, cells2
+            )
+        ).toSingleDefault(false /* game ended? */)
     }
 
     private fun endGame(
         winner: String?,
-        cells1: GameCellFlatList,
-        cells2: GameCellFlatList
-    ): GameEvent {
-        isGameEnded = true
-        return EndGameEvent(gameId, GameEventType.End, winner, cells1, cells2)
+    ): Single<Boolean> {
+        val cells1 = gameBoard1?.cells?.items?.flatten()
+        val cells2 = gameBoard2?.cells?.items?.flatten()
+
+        val game = activeGame
+        game?.winner = winner
+
+        val gameSaving =
+            if (game != null) gameRepository.addOrUpdateGame(game) else Completable.complete()
+
+        val endEvent = EndGameEvent(
+            gameId,
+            GameEventType.End,
+            winner,
+            cells1 ?: emptyList(),
+            cells2 ?: emptyList()
+        )
+
+        return gameEventRepository.addEvent(endEvent)
+            .andThen(gameSaving)
+            .toSingleDefault(true /* game ended? */)
     }
 
 }

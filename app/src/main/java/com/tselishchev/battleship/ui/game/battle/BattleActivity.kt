@@ -1,5 +1,6 @@
 package com.tselishchev.battleship.ui.game.battle
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -10,10 +11,12 @@ import com.tselishchev.battleship.models.GameCells
 import com.tselishchev.battleship.ui.activities.ShipAdapter
 import com.tselishchev.battleship.ui.game.CellClickListener
 import com.tselishchev.battleship.ui.game.GameIntentContext
+import com.tselishchev.battleship.ui.launcher.CreateGameActivity
 
 class BattleActivity : AppCompatActivity(), CellClickListener {
     private lateinit var binding: ActivityBattleBinding
-    private lateinit var adapter: ShipAdapter
+    private lateinit var opponentAdapter: ShipAdapter
+    private lateinit var yourAdapter: ShipAdapter
     private val viewModel by viewModels<BattleActivityViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,15 +26,27 @@ class BattleActivity : AppCompatActivity(), CellClickListener {
         listenForUpdates()
 
         binding.run {
-            gridRV.layoutManager = GridLayoutManager(this@BattleActivity, 10)
-            adapter = ShipAdapter(this@BattleActivity)
-            gridRV.adapter = adapter
+            opponentGridRV.isNestedScrollingEnabled = false
+            yourGridRV.isNestedScrollingEnabled = false
+            opponentGridRV.layoutManager = GridLayoutManager(this@BattleActivity, 10)
+            yourGridRV.layoutManager = GridLayoutManager(this@BattleActivity, 10)
+            opponentAdapter = ShipAdapter(this@BattleActivity)
+            yourAdapter = ShipAdapter(this@BattleActivity)
+            opponentGridRV.adapter = opponentAdapter
+            yourGridRV.adapter = yourAdapter
 
             val context = GameIntentContext.getFrom(intent)
 
             gameIdText.text = getString(R.string.game_id, context.game)
-
             gameStateText.text = "Waiting for game start..."
+
+            toolbar.setNavigationOnClickListener {
+                context.resetGameInfo()
+
+                val newIntent = Intent(this@BattleActivity, CreateGameActivity::class.java)
+                GameIntentContext.setTo(newIntent, context)
+                startActivity(newIntent)
+            }
 
             if (context.isFulfilled()) {
                 viewModel.initialize(
@@ -46,38 +61,31 @@ class BattleActivity : AppCompatActivity(), CellClickListener {
     }
 
     override fun onCellClicked(position: Int) {
-        if (viewModel.userTurn.value == true) {
+        if (viewModel.userTurn.value == true && viewModel.userWins.value == null) {
             viewModel.act(position)
         }
     }
 
     private fun listenForUpdates() {
+        viewModel.opponentCells.observe(this) { cells ->
+            opponentAdapter.submitList(GameCells.toViewCells(cells))
+        }
+
+        viewModel.userCells.observe(this) { cells ->
+            yourAdapter.submitList(cells.toViewCells())
+        }
+
         viewModel.userTurn.observe(this) { userTurn ->
-            if (userTurn) {
-                binding.gameStateText.text = "Your turn. Please click on cell to hit."
-
-                val cells = viewModel.opponentCells.value
-                if (cells != null) {
-                    adapter.submitList(GameCells.toViewCells(cells))
-                }
-            } else {
-                binding.gameStateText.text =
-                    "Waiting for another user move. Here is your battlefield."
-
-                val cells = viewModel.userCells.value
-                if (cells != null) {
-                    adapter.submitList(cells.toViewCells())
-                }
-            }
+            binding.gameStateText.text =
+                if (userTurn) "Your turn. Please click on cell to hit." else
+                    "Waiting for another user to move"
         }
 
         viewModel.userWins.observe(this) { win ->
-            val cells = viewModel.opponentCells.value
-            if (cells != null) {
-                adapter.submitList(GameCells.toViewCells(cells))
+            binding.run {
+                gameStateText.text = if (win) "Victory!" else "Defeat!"
+                toolbar.navigationIcon = getDrawable(R.drawable.ic_baseline_close_24)
             }
-
-            binding.gameStateText.text = if (win) "Victory!" else "Defeat!"
         }
     }
 }
