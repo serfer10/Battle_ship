@@ -28,6 +28,16 @@
             tools:layout_editor_absoluteX="164dp"
             tools:layout_editor_absoluteY="14dp" />
 
+        <ImageView
+            android:id="@+id/button_profile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginEnd="20dp"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            android:src="@drawable/ic_baseline_person_24" />
+
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -71,19 +81,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/gameInput" />
 
-    <ImageButton
-        android:id="@+id/button_profile"
-        android:layout_width="31dp"
-        android:layout_height="29dp"
-        android:background="#352E2E"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_launcher_foreground"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.957"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.025"
-        tools:src="@drawable/ic_launcher_foreground" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
