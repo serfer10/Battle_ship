@@ -1,19 +1,15 @@
 package com.tselishchev.battleship.models
 
-class GameBoard(private val cellCollection: GameCells) {
+class GameBoard(val cells: GameCells) {
     companion object {
         const val GAME_BOARD_SIZE = 10
     }
 
-    private val cells: GameCellList
-        get() = cellCollection.items
+    private val cellList: GameCellList
+        get() = cells.items
 
-    fun updateBoard(newStates: GameCellList) {
-        cells.forEachIndexed { x, row ->
-            row.forEachIndexed { y, _ ->
-                row[y] = newStates[x][y]
-            }
-        }
+    fun isDefeated(): Boolean {
+        return cellList.all { it.all { cell -> cell != GameCell.Ship } }
     }
 
     fun hit(position: Position): GameCell? {
@@ -21,10 +17,10 @@ class GameBoard(private val cellCollection: GameCells) {
             return null
         }
 
-        val cell = cells[position.x][position.y]
+        val cell = cellList[position.x][position.y]
 
         if (cell == GameCell.Empty) {
-            cells[position.x][position.y] = GameCell.Miss
+            cellList[position.x][position.y] = GameCell.Miss
             return GameCell.Miss
         }
 
@@ -37,11 +33,11 @@ class GameBoard(private val cellCollection: GameCells) {
     }
 
     private fun beatShip(position: Position) {
-        cells[position.x][position.y] = GameCell.BeatShip
+        cellList[position.x][position.y] = GameCell.BeatShip
         val ship = findShip(position)
 
         ship.position?.let {
-            if (it.isDestroyed(cells)) addMissCellsAround(ship)
+            if (it.isDestroyed(cellList)) addMissCellsAround(ship)
         }
     }
 
@@ -52,22 +48,22 @@ class GameBoard(private val cellCollection: GameCells) {
         var endY = position.y
 
         // check rows above
-        while (startX > 0 && (cells[startX - 1][position.y]).isShip()) {
+        while (startX > 0 && (cellList[startX - 1][position.y]).isShip()) {
             startX--
         }
 
         // check rows below
-        while (endX + 1 < GAME_BOARD_SIZE && (cells[endX + 1][position.y]).isShip()) {
+        while (endX + 1 < GAME_BOARD_SIZE && (cellList[endX + 1][position.y]).isShip()) {
             endX++
         }
 
         // check columns before
-        while (startY > 0 && (cells[position.x][startY - 1]).isShip()) {
+        while (startY > 0 && (cellList[position.x][startY - 1]).isShip()) {
             startY--
         }
 
         // check columns after
-        while (endY + 1 < GAME_BOARD_SIZE && (cells[position.x][endY + 1]).isShip()) {
+        while (endY + 1 < GAME_BOARD_SIZE && (cellList[position.x][endY + 1]).isShip()) {
             endY++
         }
 
@@ -93,8 +89,8 @@ class GameBoard(private val cellCollection: GameCells) {
                 }
 
                 for (y in it.columnsWithSpace) {
-                    if ((y in 0 until GAME_BOARD_SIZE) && (cells[x][y] == GameCell.Empty)) {
-                        cells[x][y] = GameCell.Miss
+                    if ((y in 0 until GAME_BOARD_SIZE) && (cellList[x][y] == GameCell.Empty)) {
+                        cellList[x][y] = GameCell.Miss
                     }
                 }
             }

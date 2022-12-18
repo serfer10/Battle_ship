@@ -36,7 +36,7 @@ class GameEventRepository {
             val gameUpdate = db.collection(GAME_EVENTS)
                 .whereEqualTo("game", gameId)
                 .addSnapshotListener { snapshots, error ->
-                    if (snapshots == null || error != null || !emitter.isDisposed) {
+                    if (snapshots == null || error != null || emitter.isDisposed) {
                         return@addSnapshotListener
                     }
 

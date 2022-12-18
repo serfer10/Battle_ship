@@ -2,6 +2,7 @@ package com.tselishchev.battleship.models
 
 typealias GameCellList = List<MutableList<GameCell>>
 typealias GameCellArray = Array<Array<GameCell>>
+typealias GameCellFlatList = List<GameCell>
 
 enum class GameCell(private val type: Int) {
     Empty(0),

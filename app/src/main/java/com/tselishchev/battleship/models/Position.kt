@@ -1,6 +1,6 @@
 package com.tselishchev.battleship.models
 
-data class Position(val x: Int, val y: Int) {
+data class Position(var x: Int = -1, var y: Int = -1) {
     constructor(index: Int) : this(
         index / GameBoard.GAME_BOARD_SIZE,
         index % GameBoard.GAME_BOARD_SIZE
