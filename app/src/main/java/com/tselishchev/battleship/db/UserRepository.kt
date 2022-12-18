@@ -43,4 +43,21 @@ class UserRepository {
             }
         }
     }
+
+    fun getUsersById(id: String?): Single<List<User>> {
+        return Single.create { emitter ->
+            db.collection(USERS).whereEqualTo("id", id).get().addOnSuccessListener {
+                if (!emitter.isDisposed) {
+                    val users = it.documents.map { document ->
+                        document.toObject(User::class.java)!!
+                    }
+                    emitter.onSuccess(users)
+                }
+            }.addOnFailureListener {
+                if (!emitter.isDisposed) {
+                    emitter.onError(it)
+                }
+            }
+        }
+    }
 }

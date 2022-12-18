@@ -58,6 +58,7 @@ class CreateGameViewModel : ViewModel() {
         disposable.clear()
     }
 
+
     private fun getId(): String {
         return List(ID_LENGTH) { charPool.random() }.joinToString("")
     }
