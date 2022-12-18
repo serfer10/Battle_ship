@@ -24,19 +24,18 @@
             android:layout_gravity="center"
             android:text="Profile" />
 
+        <ImageView
+            android:id="@+id/button_edit_profile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginEnd="20dp"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            android:src="@drawable/ic_edit" />
+
     </androidx.appcompat.widget.Toolbar>
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="87dp"
-        android:layout_height="35dp"
-        android:text="Button"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/profileToolbar"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
 
     <ImageView
         android:id="@+id/imageView3"
