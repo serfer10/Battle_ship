@@ -13,6 +13,11 @@ data class GameIntentContext(
         return cells != null && game != null && user != null
     }
 
+    fun resetGameInfo() {
+        cells = null
+        game = null
+    }
+
     companion object {
         const val GAME_CELLS = "GAME_CELLS"
         const val USER_ID = "USER_ID"

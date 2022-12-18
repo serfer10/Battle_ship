@@ -44,20 +44,29 @@ class GameRepository {
         }.map(::mapToGame)
     }
 
-    private fun listenForGameUpdates(id: String): Observable<Game> {
-        return Subject.create { emitter ->
-            val gameUpdate = db.collection(GAMES)
-                .document(id)
-                .addSnapshotListener { value, error ->
-                    if (value == null || error != null || !emitter.isDisposed) {
-                        return@addSnapshotListener
+    fun getUserLastGames(user: String, gameNumber: Int): Single<List<Game>> {
+        val getGamesAsUser1 = getUserGames(user, "user1")
+        val getGamesAsUser2 = getUserGames(user, "user2")
+
+        return getGamesAsUser1.flatMap { user1Games ->
+            return@flatMap getGamesAsUser2.map { user2Games -> user1Games + user2Games }
+        }
+    }
+
+    private fun getUserGames(user: String, userType: String): Single<List<Game>> {
+        return Single.create { emitter ->
+            db.collection(GAMES)
+                .whereEqualTo(userType, user)
+                .get()
+                .addOnSuccessListener {
+                    if (!emitter.isDisposed) {
+                        emitter.onSuccess(it.documents.map(::mapToGame))
                     }
-
-                    val game = mapToGame(value)
-                    emitter.onNext(game)
+                }.addOnFailureListener {
+                    if (!emitter.isDisposed) {
+                        emitter.onError(it)
+                    }
                 }
-
-            emitter.setCancellable { gameUpdate.remove() }
         }
     }
 
