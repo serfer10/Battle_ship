@@ -3,12 +3,10 @@ package com.tselishchev.battleship.ui.launcher
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
-import com.tselishchev.battleship.R
 import com.tselishchev.battleship.databinding.ActivityCreateGameBinding
+import com.tselishchev.battleship.ui.game.GameEngine
 import com.tselishchev.battleship.ui.game.createField.CreateFieldActivity
 import com.tselishchev.battleship.ui.game.GameIntentContext
 import com.tselishchev.battleship.ui.profile.ProfileActivity
@@ -31,11 +29,17 @@ class CreateGameActivity : AppCompatActivity() {
 
         binding.run {
             createNewGameButton.setSafeOnClickListener {
-                viewModel.createGame()
+                val user = context.user
+                if (user != null) {
+                    viewModel.createGame(user)
+                }
             }
 
             joinGameButton.setSafeOnClickListener {
-                viewModel.joinGame(gameEditText.text.toString())
+                val user = context.user
+                if (user != null) {
+                    viewModel.joinGame(gameEditText.text.toString(), user)
+                }
             }
 
             buttonProfile.setSafeOnClickListener {
@@ -69,6 +73,10 @@ class CreateGameActivity : AppCompatActivity() {
 
 
     private fun onGameFound() {
+        viewModel.newGameCreated.observe(this) { game ->
+            GameEngine(game.id)
+        }
+
         viewModel.activeGame.observe(this) { game ->
             if (game == null) {
                 Toast.makeText(

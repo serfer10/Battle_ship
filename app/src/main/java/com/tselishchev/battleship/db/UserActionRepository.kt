@@ -36,7 +36,7 @@ class UserActionRepository {
             val gameUpdate = db.collection(USER_ACTIONS)
                 .whereEqualTo("game", gameId)
                 .addSnapshotListener { snapshots, error ->
-                    if (snapshots == null || error != null || !emitter.isDisposed) {
+                    if (snapshots == null || error != null || emitter.isDisposed) {
                         return@addSnapshotListener
                     }
 

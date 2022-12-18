@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.tselishchev.battleship.R
 import com.tselishchev.battleship.databinding.ActivityCreateFieldBinding
 import com.tselishchev.battleship.models.Ship
 import com.tselishchev.battleship.models.ShipType
@@ -35,6 +36,8 @@ class CreateFieldActivity : AppCompatActivity(), CellClickListener {
             gridRV.adapter = adapter
 
             radioOne.isChecked = true
+
+            gameIdText.text = getString(R.string.game_id, context.game)
         }
 
         initShipSelectionListeners()

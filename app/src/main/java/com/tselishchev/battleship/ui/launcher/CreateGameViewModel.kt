@@ -18,16 +18,19 @@ class CreateGameViewModel : ViewModel() {
     private val gameRepository = GameRepository()
     private val charPool: List<Char> = ('a'..'z') + ('0'..'9')
     private val _activeGame = MutableLiveData<Game?>()
+    private val _newGameCreated = MutableLiveData<Game>()
     private val disposable = CompositeDisposable()
 
     val activeGame: LiveData<Game?> = _activeGame
+    val newGameCreated: LiveData<Game> = _newGameCreated
 
-    fun createGame(user: User? = null) {
-        val game = Game(getId(), user1 = user?.id)
+    fun createGame(user: String) {
+        val game = Game(getId(), user1 = user)
         disposable.add(
             gameRepository.addOrUpdateGame(game)
                 .subscribeOn(Schedulers.io())
                 .subscribe({
+                    _newGameCreated.postValue(game)
                     _activeGame.postValue(game)
                 }, {
                     _activeGame.postValue(null)
@@ -35,11 +38,15 @@ class CreateGameViewModel : ViewModel() {
         )
     }
 
-    fun joinGame(id: String, user: User? = null) {
+    fun joinGame(id: String, user: String) {
         disposable.add(
             gameRepository.getGame(id)
                 .flatMap {
-                    it.user2 = user?.id
+                    if (it.user2 != null || it.user1 == user) {
+                        return@flatMap Single.just(null)
+                    }
+
+                    it.user2 = user
                     return@flatMap gameRepository.addOrUpdateGame(it).andThen(Single.just(it))
                 }
                 .subscribeOn(Schedulers.io())

@@ -13,4 +13,5 @@
     <string name="save_new_info">Save new info</string>
     <string name="edit_profile">Edit profile</string>
     <string name="new_profile">New profile</string>
+    <string name="game_id">Game id: %s</string>
 </resources>

@@ -10,7 +10,7 @@ data class JoinAction(
     override var game: String = "",
     override var user: String = "",
     override var type: UserActionType = UserActionType.Join,
-    val cells: GameCellArray = emptyArray()
+    val cells: GameCellFlatList = emptyList()
 ) : UserAction
 
 data class LeftAction(

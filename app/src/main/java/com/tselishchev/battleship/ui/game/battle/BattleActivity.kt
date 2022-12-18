@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.tselishchev.battleship.R
 import com.tselishchev.battleship.databinding.ActivityBattleBinding
 import com.tselishchev.battleship.models.GameCells
 import com.tselishchev.battleship.ui.activities.ShipAdapter
@@ -28,11 +29,15 @@ class BattleActivity : AppCompatActivity(), CellClickListener {
 
             val context = GameIntentContext.getFrom(intent)
 
-            if (context != null && context.isFulfilled()) {
+            gameIdText.text = getString(R.string.game_id, context.game)
+
+            gameStateText.text = "Waiting for game start..."
+
+            if (context.isFulfilled()) {
                 viewModel.initialize(
                     context.user!!,
                     context.game!!,
-                    context.cells!!
+                    GameCells(context.cells!!)
                 )
             }
         }
@@ -41,12 +46,38 @@ class BattleActivity : AppCompatActivity(), CellClickListener {
     }
 
     override fun onCellClicked(position: Int) {
-        viewModel.act(position)
+        if (viewModel.userTurn.value == true) {
+            viewModel.act(position)
+        }
     }
 
     private fun listenForUpdates() {
-        viewModel.userCells.observe(this) { cells ->
-            adapter.submitList(GameCells(cells).toViewCells())
+        viewModel.userTurn.observe(this) { userTurn ->
+            if (userTurn) {
+                binding.gameStateText.text = "Your turn. Please click on cell to hit."
+
+                val cells = viewModel.opponentCells.value
+                if (cells != null) {
+                    adapter.submitList(GameCells.toViewCells(cells))
+                }
+            } else {
+                binding.gameStateText.text =
+                    "Waiting for another user move. Here is your battlefield."
+
+                val cells = viewModel.userCells.value
+                if (cells != null) {
+                    adapter.submitList(cells.toViewCells())
+                }
+            }
+        }
+
+        viewModel.userWins.observe(this) { win ->
+            val cells = viewModel.opponentCells.value
+            if (cells != null) {
+                adapter.submitList(GameCells.toViewCells(cells))
+            }
+
+            binding.gameStateText.text = if (win) "Victory!" else "Defeat!"
         }
     }
 }
