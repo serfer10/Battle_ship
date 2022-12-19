@@ -40,13 +40,15 @@ class BattleActivity : AppCompatActivity(), CellClickListener {
             gameIdText.text = getString(R.string.game_id, context.game)
             gameStateText.text = "Waiting for game start..."
 
-            toolbar.setNavigationOnClickListener {
+            if(viewModel._endgame)
+            {toolbar.setNavigationOnClickListener {
                 context.resetGameInfo()
 
                 val newIntent = Intent(this@BattleActivity, CreateGameActivity::class.java)
                 GameIntentContext.setTo(newIntent, context)
                 startActivity(newIntent)
-            }
+            }}
+
 
             if (context.isFulfilled()) {
                 viewModel.initialize(

@@ -44,11 +44,14 @@ class UserRepository {
         }
     }
 
-    fun updateUser(user: User): Completable {
-        return Completable.create { emitter ->
-            db.collection(USERS).document(user.id).update("name","gay").addOnSuccessListener {
+    fun getUserById(id:String): Single<User>{
+        return Single.create { emitter ->
+            db.collection(USERS).whereEqualTo("id", id).get().addOnSuccessListener {
                 if (!emitter.isDisposed) {
-                    emitter.onComplete()
+                    val users = it.documents.map { document ->
+                        document.toObject(User::class.java)!!
+                    }
+                    emitter.onSuccess(users.first())
                 }
             }.addOnFailureListener {
                 if (!emitter.isDisposed) {
