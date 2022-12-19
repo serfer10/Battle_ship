@@ -32,6 +32,7 @@ class BattleActivityViewModel(
     private val _opponentCells = MutableLiveData(GameCells.emptyList())
     private val _userWins = MutableLiveData<Boolean>()
     private val _userTurn = MutableLiveData<Boolean>()
+    var _endgame = false
 
     val userCells: LiveData<GameCells>
         get() = _userCells
@@ -121,6 +122,7 @@ class BattleActivityViewModel(
 
     private fun emitGameEnd(event: EndGameEvent) {
         _userWins.postValue(event.winner == user)
+        _endgame = true
     }
 
     private fun updateBoards(event: BattleGameEvent) {

@@ -1,7 +1,10 @@
 package com.tselishchev.battleship.ui.profile
 
+import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.widget.addTextChangedListener
 import com.tselishchev.battleship.databinding.ActivityUpdateProfileBinding
@@ -29,10 +32,18 @@ class UpdateProfileActivity : AppCompatActivity() {
 
             buttonSaveInfo.setSafeOnClickListener {
                 viewModel.updateUser(User(
-                    id = this@UpdateProfileActivity.context.user.toString()
+                    id = intent.getStringExtra(ID).toString()
                     ,name = nicknameEditText.text.toString()
-                    ,password = nicknameEditText.text.toString()
-                    ,avatar = ""))
+                    ,password = passwordEditText.text.toString()
+                    ,avatar = intent.getStringExtra(AVATAR).toString()))
+            }
+        }
+        viewModel.userUpdateResult.observe(this){
+            if(it == "yes"){
+                Toast.makeText(this,"User information changed",Toast.LENGTH_SHORT).show()
+                finish()
+            }else{
+                Toast.makeText(this,"Error",Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -41,6 +52,17 @@ class UpdateProfileActivity : AppCompatActivity() {
         binding.run {
             buttonSaveInfo.isEnabled =
                 !nicknameEditText.text.isNullOrBlank() && !passwordEditText.text.isNullOrBlank()
+        }
+    }
+    companion object{
+        const val AVATAR = "avatar"
+        const val ID = "id"
+
+        fun start(context: Context,id:String, avatar: String) {
+            val intent = Intent(context, UpdateProfileActivity::class.java)
+                .putExtra(AVATAR, avatar)
+                .putExtra(ID, id)
+            context.startActivity(intent)
         }
     }
 }
